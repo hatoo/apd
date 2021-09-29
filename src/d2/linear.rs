@@ -1,25 +1,25 @@
 use ndarray::{Array, Array2, Zip};
 
-pub fn apply_a2(out: &mut Array2<f64>, ans: &Array2<f64>, a: &Array2<f64>, c: &Array2<f64>) {
-    let (w, h) = ans.dim();
+pub fn apply_a(out: &mut Array2<f64>, v: &Array2<f64>, diag: &Array2<f64>, others: &Array2<f64>) {
+    let (w, h) = v.dim();
 
     out.indexed_iter_mut().for_each(|((i, j), e)| {
-        *e = c[[i, j]] * ans[[i, j]];
+        *e = diag[[i, j]] * v[[i, j]];
 
         if i > 0 {
-            *e += a[[i - 1, j]] * ans[[i - 1, j]];
+            *e += others[[i - 1, j]] * v[[i - 1, j]];
         }
 
         if i + 1 < w {
-            *e += a[[i + 1, j]] * ans[[i + 1, j]];
+            *e += others[[i + 1, j]] * v[[i + 1, j]];
         }
 
         if j > 0 {
-            *e += a[[i, j - 1]] * ans[[i, j - 1]];
+            *e += others[[i, j - 1]] * v[[i, j - 1]];
         }
 
         if j + 1 < h {
-            *e += a[[i, j + 1]] * ans[[i, j + 1]];
+            *e += others[[i, j + 1]] * v[[i, j + 1]];
         }
     })
 }
@@ -135,7 +135,7 @@ pub fn lin_solve_pcg2(
     let mut err = 0.0;
 
     for i in 0..200 {
-        apply_a2(&mut z, &s, a, c);
+        apply_a(&mut z, &s, c, a);
         let alpha = sigma / dot_product(&z, &s);
 
         Zip::from(&mut *p).and(&s).for_each(|a, &b| {
