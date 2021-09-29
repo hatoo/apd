@@ -68,7 +68,7 @@ fn pre_compute(diag: &Array2<f64>, others: &Array2<f64>) -> Array2<f64> {
     precon
 }
 
-fn apply_precon2(z: &mut Array2<f64>, r: &Array2<f64>, a: &Array2<f64>, precon: &Array2<f64>) {
+fn apply_precon(z: &mut Array2<f64>, r: &Array2<f64>, others: &Array2<f64>, precon: &Array2<f64>) {
     let (w, h) = z.dim();
 
     let mut q = Array::zeros(z.dim());
@@ -77,12 +77,12 @@ fn apply_precon2(z: &mut Array2<f64>, r: &Array2<f64>, a: &Array2<f64>, precon: 
         for j in 0..h {
             let t = r[[i, j]]
                 - if i > 0 {
-                    a[[i - 1, j]] * precon[[i - 1, j]] * q[[i - 1, j]]
+                    others[[i - 1, j]] * precon[[i - 1, j]] * q[[i - 1, j]]
                 } else {
                     0.0
                 }
                 - if j > 0 {
-                    a[[i, j - 1]] * precon[[i, j - 1]] * q[[i, j - 1]]
+                    others[[i, j - 1]] * precon[[i, j - 1]] * q[[i, j - 1]]
                 } else {
                     0.0
                 };
@@ -94,12 +94,12 @@ fn apply_precon2(z: &mut Array2<f64>, r: &Array2<f64>, a: &Array2<f64>, precon: 
         for j in (0..h).rev() {
             let t = q[[i, j]]
                 - if i + 1 < w {
-                    a[[i, j]] * precon[[i, j]] * z[[i + 1, j]]
+                    others[[i, j]] * precon[[i, j]] * z[[i + 1, j]]
                 } else {
                     0.0
                 }
                 - if j + 1 < h {
-                    a[[i, j]] * precon[[i, j]] * z[[i, j + 1]]
+                    others[[i, j]] * precon[[i, j]] * z[[i, j + 1]]
                 } else {
                     0.0
                 };
@@ -117,29 +117,31 @@ fn dot_product(a: &Array2<f64>, b: &Array2<f64>) -> f64 {
 
 pub fn lin_solve_pcg2(
     p: &mut Array2<f64>,
-    d: &Array2<f64>,
-    a: &Array2<f64>,
-    c: &Array2<f64>,
+    b: &Array2<f64>,
+    diag: &Array2<f64>,
+    others: &Array2<f64>,
 ) -> (usize, f64) {
-    assert_eq!(p.dim(), d.dim());
+    assert_eq!(p.dim(), b.dim());
+    assert_eq!(p.dim(), diag.dim());
+    assert_eq!(p.dim(), others.dim());
 
-    if d.iter().all(|&d| d < 1e-6) {
+    if b.iter().all(|&d| d < 1e-6) {
         return (0, 0.0);
     }
 
-    let tol = 1e-6 * d.iter().fold(0.0f64, |a, &b| a.max(b));
+    let tol = 1e-6 * b.iter().fold(0.0f64, |a, &b| a.max(b));
 
-    let precon = pre_compute(c, a);
-    let mut r = d.clone();
+    let precon = pre_compute(diag, others);
+    let mut r = b.clone();
     let mut z = Array::zeros(p.dim());
-    apply_precon2(&mut z, &r, a, &precon);
+    apply_precon(&mut z, &r, others, &precon);
     let mut s = z.clone();
 
     let mut sigma = dot_product(&z, &r);
     let mut err = 0.0;
 
     for i in 0..200 {
-        apply_a(&mut z, &s, c, a);
+        apply_a(&mut z, &s, diag, others);
         let alpha = sigma / dot_product(&z, &s);
 
         Zip::from(&mut *p).and(&s).for_each(|a, &b| {
@@ -155,7 +157,7 @@ pub fn lin_solve_pcg2(
             return (i, err);
         }
 
-        apply_precon2(&mut z, &r, a, &precon);
+        apply_precon(&mut z, &r, others, &precon);
 
         let sigma_new = dot_product(&z, &r);
         let beta = sigma_new / sigma;
