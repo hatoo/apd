@@ -127,6 +127,8 @@ pub fn lin_solve_pcg(
     assert_eq!(p.dim(), diag.dim());
     assert_eq!(p.dim(), others.dim());
 
+    const MAX_ITER: usize = 200;
+
     if b.iter().all(|&d| d < 1e-6) {
         return (0, 0.0);
     }
@@ -142,7 +144,7 @@ pub fn lin_solve_pcg(
     let mut sigma = dot_product(&z, &r);
     let mut err = 0.0;
 
-    for i in 0..200 {
+    for i in 0..MAX_ITER {
         apply_a(&mut z, &s, diag, others);
         let alpha = sigma / dot_product(&z, &s);
 
@@ -171,5 +173,5 @@ pub fn lin_solve_pcg(
         sigma = sigma_new;
     }
 
-    (200, err)
+    (MAX_ITER, err)
 }
