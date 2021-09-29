@@ -1,3 +1,5 @@
+use std::f64::consts::PI;
+
 use cgmath::{vec2, Vector2};
 use ndarray::{Array, Array2};
 
@@ -84,6 +86,58 @@ pub fn advect(q: &Array2<f64>, uv: &Array2<Vector2<f64>>, coeff: f64) -> Array2<
         let v = x0 - 2.0 / 9.0 * coeff * k1 - 3.0 / 9.0 * coeff * k2 - 4.0 / 9.0 * coeff * k3;
 
         interpolate_bicubic(q, v)
+    })
+}
+
+pub fn diffuse_gauss_filter(
+    q: &Array2<f64>,
+    sigma2: f64,
+    dx: f64,
+    ambient_value: f64,
+) -> Array2<f64> {
+    let cut_off = 0.1 * sigma2.sqrt();
+    let left = 1.0 / (2.0 * PI * sigma2).sqrt();
+    let coeff: Vec<f64> = (0..)
+        .map(|i| left * (-(i as f64 * dx).powi(2) / (2.0 * sigma2)).exp())
+        .take_while(|&f| f > cut_off)
+        .take(q.dim().0.max(q.dim().1))
+        .collect();
+
+    let coeff_sum_inv = 1.0 / (coeff.iter().sum::<f64>() * 2.0 - coeff[0]);
+
+    let x1 = Array::from_shape_fn(q.dim(), |(i, j)| {
+        let mut sum = coeff[0] * q[[i, j]];
+        for c in 1..coeff.len() {
+            sum += coeff[c] * if i >= c { q[[i - c, j]] } else { ambient_value };
+
+            sum += coeff[c]
+                * if i + c < q.dim().0 {
+                    q[[i + c, j]]
+                } else {
+                    ambient_value
+                };
+        }
+        sum * coeff_sum_inv
+    });
+
+    Array::from_shape_fn(q.dim(), |(i, j)| {
+        let mut sum = coeff[0] * x1[[i, j]];
+        for c in 1..coeff.len() {
+            sum += coeff[c]
+                * if j >= c {
+                    x1[[i, j - c]]
+                } else {
+                    ambient_value
+                };
+
+            sum += coeff[c]
+                * if j + c < q.dim().1 {
+                    x1[[i, j + c]]
+                } else {
+                    ambient_value
+                };
+        }
+        sum * coeff_sum_inv
     })
 }
 
