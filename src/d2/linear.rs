@@ -68,6 +68,7 @@ fn pre_compute(diag: &Array2<f64>, others: &Array2<f64>) -> Array2<f64> {
     precon
 }
 
+#[allow(clippy::many_single_char_names)]
 fn apply_precon(z: &mut Array2<f64>, r: &Array2<f64>, others: &Array2<f64>, precon: &Array2<f64>) {
     let (w, h) = z.dim();
 
@@ -115,6 +116,7 @@ fn dot_product(a: &Array2<f64>, b: &Array2<f64>) -> f64 {
         .sum::<f64>()
 }
 
+#[allow(clippy::many_single_char_names)]
 pub fn lin_solve_pcg(
     p: &mut Array2<f64>,
     b: &Array2<f64>,
