@@ -24,40 +24,44 @@ pub fn apply_a(out: &mut Array2<f64>, v: &Array2<f64>, diag: &Array2<f64>, other
     })
 }
 
-fn pre_compute(a: &Array2<f64>, c: &Array2<f64>) -> Array2<f64> {
+fn pre_compute(diag: &Array2<f64>, others: &Array2<f64>) -> Array2<f64> {
     let tuning = 0.97;
     let sigma = 0.25;
 
-    let (w, h) = a.dim();
-    let mut precon = Array::from_elem(a.dim(), 0.0);
+    let (w, h) = others.dim();
+    let mut precon = Array::from_elem(others.dim(), 0.0);
 
     for i in 0..w {
         for j in 0..h {
-            let e = c[[i, j]]
+            let e = diag[[i, j]]
                 - if i > 0 {
-                    a[[i - 1, j]] * precon[[i - 1, j]]
+                    others[[i - 1, j]] * precon[[i - 1, j]]
                 } else {
                     0.0
                 }
                 .powi(2)
                 - if j > 0 {
-                    a[[i, j - 1]] * precon[[i, j - 1]]
+                    others[[i, j - 1]] * precon[[i, j - 1]]
                 } else {
                     0.0
                 }
                 .powi(2)
                 - tuning
                     * (if i > 0 {
-                        a[[i - 1, j]] * a[[i - 1, j]] * precon[[i - 1, j]].powi(2)
+                        others[[i - 1, j]] * others[[i - 1, j]] * precon[[i - 1, j]].powi(2)
                     } else {
                         0.0
                     } + if j > 0 {
-                        a[[i, j - 1]] * a[[i, j - 1]] * precon[[i, j - 1]].powi(2)
+                        others[[i, j - 1]] * others[[i, j - 1]] * precon[[i, j - 1]].powi(2)
                     } else {
                         0.0
                     });
 
-            let e = if e < sigma * c[[i, j]] { c[[i, j]] } else { e };
+            let e = if e < sigma * diag[[i, j]] {
+                diag[[i, j]]
+            } else {
+                e
+            };
             precon[[i, j]] = 1.0 / e.sqrt();
         }
     }
@@ -125,7 +129,7 @@ pub fn lin_solve_pcg2(
 
     let tol = 1e-6 * d.iter().fold(0.0f64, |a, &b| a.max(b));
 
-    let precon = pre_compute(a, c);
+    let precon = pre_compute(c, a);
     let mut r = d.clone();
     let mut z = Array::zeros(p.dim());
     apply_precon2(&mut z, &r, a, &precon);
