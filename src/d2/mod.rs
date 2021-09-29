@@ -5,6 +5,12 @@ use ndarray::{Array, Array2};
 
 mod linear;
 
+#[derive(Clone)]
+pub struct MacGrid {
+    u: Array2<f64>,
+    v: Array2<f64>,
+}
+
 fn interpolate_linear(q: &Array2<Vector2<f64>>, ij: Vector2<f64>) -> Vector2<f64> {
     let (w, h) = q.dim();
 
@@ -143,6 +149,45 @@ pub fn diffuse_gauss_filter(
     })
 }
 
+impl MacGrid {
+    pub fn dim(&self) -> (usize, usize) {
+        (self.v.dim().0, self.u.dim().1)
+    }
+
+    pub fn project(&mut self, dt: f64, dx: f64, divergence: Array2<f64>) {
+        let div = Array::from_shape_fn(self.dim(), |(i, j)| {
+            -1.0 * (self.u[[i + 1, j]] - self.u[[i, j]] + self.v[[i, j + 1]] - self.v[[i, j]]) / dx
+                + divergence[[i, j]] / dx
+        });
+
+        let density = Array::from_elem(self.dim(), 1.0);
+        let mut p = Array::zeros(div.dim());
+
+        let scale = dt / (dx * dx);
+
+        let diag = 4.0 * scale / &density;
+        let others = -1.0 * scale / &density;
+
+        linear::lin_solve_pcg(&mut p, &div, &diag, &others);
+
+        let l = dt / (dx);
+
+        let (w, h) = self.dim();
+        for i in 1..w {
+            for j in 0..h {
+                self.u[[i, j]] -= l * (p[[i, j]] - p[[i - 1, j]])
+                    / (0.5 * (density[[i - 1, j]] + density[[i, j]]));
+            }
+        }
+
+        for i in 0..w {
+            for j in 1..h {
+                self.v[[i, j]] -= l * (p[[i, j]] - p[[i, j - 1]])
+                    / (0.5 * (density[[i, j - 1]] + density[[i, j]]));
+            }
+        }
+    }
+}
 #[cfg(test)]
 mod test {
     use super::*;
