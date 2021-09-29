@@ -3,6 +3,8 @@ use std::f64::consts::PI;
 use cgmath::{vec2, Vector2};
 use ndarray::{Array, Array2};
 
+mod linear;
+
 fn interpolate_linear(q: &Array2<Vector2<f64>>, ij: Vector2<f64>) -> Vector2<f64> {
     let (w, h) = q.dim();
 
