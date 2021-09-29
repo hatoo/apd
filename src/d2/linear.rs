@@ -1,6 +1,6 @@
 use ndarray::{Array, Array2, Zip};
 
-pub fn apply_a(out: &mut Array2<f64>, v: &Array2<f64>, diag: &Array2<f64>, others: &Array2<f64>) {
+fn apply_a(out: &mut Array2<f64>, v: &Array2<f64>, diag: &Array2<f64>, others: &Array2<f64>) {
     let (w, h) = v.dim();
 
     out.indexed_iter_mut().for_each(|((i, j), e)| {
@@ -115,7 +115,7 @@ fn dot_product(a: &Array2<f64>, b: &Array2<f64>) -> f64 {
         .sum::<f64>()
 }
 
-pub fn lin_solve_pcg2(
+pub fn lin_solve_pcg(
     p: &mut Array2<f64>,
     b: &Array2<f64>,
     diag: &Array2<f64>,
