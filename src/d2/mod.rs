@@ -170,7 +170,7 @@ impl MacGrid {
 
         linear::lin_solve_pcg(&mut p, &div, &diag, &others);
 
-        let l = dt / (dx);
+        let l = dt / dx;
 
         let (w, h) = self.dim();
         for i in 1..w {
