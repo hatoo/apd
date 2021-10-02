@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
 use cgmath::{vec2, Vector2};
-use ndarray::{Array, Array2};
+use ndarray::{Array, Array2, Zip};
 
 mod linear;
 
@@ -99,12 +99,7 @@ pub fn advect(q: &Array2<f64>, uv: &Array2<Vector2<f64>>, coeff: f64) -> Array2<
     })
 }
 
-pub fn diffuse_gauss_filter(
-    q: &Array2<f64>,
-    sigma2: f64,
-    dx: f64,
-    ambient_value: f64,
-) -> Array2<f64> {
+pub fn diffuse(q: &Array2<f64>, sigma2: f64, dx: f64, ambient_value: f64) -> Array2<f64> {
     let cut_off = 0.1 * sigma2.sqrt();
     let left = 1.0 / (2.0 * PI * sigma2).sqrt();
     let coeff: Vec<f64> = (0..)
@@ -152,8 +147,80 @@ pub fn diffuse_gauss_filter(
 }
 
 impl MacGrid {
+    pub fn new(u: Array2<f64>, v: Array2<f64>) -> Self {
+        let u_dim = u.dim();
+        let v_dim = v.dim();
+
+        assert_eq!((u_dim.0 - 1, u_dim.1), (v_dim.0, v_dim.1 - 1));
+
+        Self { u, v }
+    }
+
+    pub fn zeros((w, h): (usize, usize)) -> Self {
+        Self {
+            u: Array::zeros((w + 1, h)),
+            v: Array::zeros((w, h + 1)),
+        }
+    }
+
     pub fn dim(&self) -> (usize, usize) {
         (self.v.dim().0, self.u.dim().1)
+    }
+
+    pub fn create_uv(&self) -> Array2<Vector2<f64>> {
+        Array::from_shape_fn(self.dim(), |(i, j)| {
+            let u = 0.5 * (self.u[[i, j]] + self.u[[i + 1, j]]);
+            let v = 0.5 * (self.v[[i, j]] + self.v[[i, j + 1]]);
+
+            vec2(u, v)
+        })
+    }
+
+    pub fn add(&mut self, other: &Self, weight: f64) {
+        assert_eq!(self.dim(), other.dim());
+
+        Zip::from(&mut self.u).and(&other.u).for_each(|a, &b| {
+            *a += weight * b;
+        });
+
+        Zip::from(&mut self.v).and(&other.v).for_each(|a, &b| {
+            *a += weight * b;
+        });
+    }
+
+    pub fn self_advect(&mut self, weight: f64) {
+        let u_uv = Array::from_shape_fn(self.u.dim(), |(i, j)| {
+            let u = self.u[[i, j]];
+            let v = if i == 0 {
+                0.5 * (self.v[[i, j]] + self.v[[i, j + 1]])
+            } else if i == self.u.dim().0 - 1 {
+                0.5 * (self.v[[i - 1, j]] + self.v[[i - 1, j + 1]])
+            } else {
+                0.25 * (self.v[[i, j]]
+                    + self.v[[i, j + 1]]
+                    + self.v[[i - 1, j]]
+                    + self.v[[i - 1, j + 1]])
+            };
+            vec2(u, v)
+        });
+
+        let v_uv = Array::from_shape_fn(self.v.dim(), |(i, j)| {
+            let v = self.v[[i, j]];
+            let u = if j == 0 {
+                0.5 * (self.u[[i, j]] + self.u[[i + 1, j]])
+            } else if j == self.v.dim().1 - 1 {
+                0.5 * (self.u[[i, j - 1]] + self.u[[i + 1, j - 1]])
+            } else {
+                0.25 * (self.u[[i, j]]
+                    + self.u[[i, j - 1]]
+                    + self.u[[i + 1, j]]
+                    + self.u[[i + 1, j - 1]])
+            };
+            vec2(u, v)
+        });
+
+        self.u = advect(&self.u, &u_uv, weight);
+        self.v = advect(&self.v, &v_uv, weight);
     }
 
     pub fn project(&mut self, dt: f64, dx: f64, divergence: Array2<f64>) {
@@ -191,6 +258,11 @@ impl MacGrid {
                     / (0.5 * (density[[i, j - 1]] + density[[i, j]]));
             }
         }
+    }
+
+    pub fn diffuse(&mut self, sigma2: f64, dx: f64) {
+        self.u = diffuse(&self.u, sigma2, dx, 0.0);
+        self.v = diffuse(&self.v, sigma2, dx, 0.0);
     }
 }
 #[cfg(test)]
