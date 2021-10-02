@@ -1,5 +1,5 @@
 #![deny(missing_docs)]
-//! APD: Advect, Project, Diffuse
+#![doc = include_str!("../README.md")]
 
 /// 2D
 pub mod d2;
