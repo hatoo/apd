@@ -1,7 +1,14 @@
 [package]
 name = "apd"
 version = "0.0.0"
+authors = ["hatoo <hato2000@gmail.com>"]
 edition = "2018"
+description = "APD is a simple fluid simulation library supports Advect, Project and Diffuse operations."
+repository = "https://github.com/hatoo/apd"
+readme = "README.md"
+keywords = ["graphics", "fluid-simulation"]
+categories = ["graphics", "algorithms"]
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
