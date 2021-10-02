@@ -13,11 +13,6 @@ pub struct MacGrid {
 
 #[allow(clippy::many_single_char_names)]
 fn interpolate_linear(q: &Array2<Vector2<f64>>, ij: Vector2<f64>) -> Vector2<f64> {
-    let (w, h) = q.dim();
-
-    assert!(w >= 1);
-    assert!(h >= 1);
-
     let x = ij.x;
     let y = ij.y;
 
@@ -41,9 +36,6 @@ fn interpolate_linear(q: &Array2<Vector2<f64>>, ij: Vector2<f64>) -> Vector2<f64
 #[allow(clippy::many_single_char_names)]
 fn interpolate_bicubic(q: &Array2<f64>, ij: Vector2<f64>, ambient_value: f64) -> f64 {
     let (w, h) = q.dim();
-
-    assert!(w >= 4);
-    assert!(h >= 4);
 
     let x = ij.x;
     let y = ij.y;
