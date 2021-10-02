@@ -84,11 +84,11 @@ fn interpolate_bicubic(q: &Array2<f64>, ij: Vector2<f64>, ambient_value: f64) ->
     q_m1 * t_m1 + q_0 * t_0 + q_p1 * t_p1 + q_p2 * t_p2
 }
 
-/// Advect `q` by `coeff` * `uv` vectors.
+/// Advect `q` by `weight` * `uv` vectors.
 pub fn advect(
     q: &Array2<f64>,
     uv: &Array2<Vector2<f64>>,
-    coeff: f64,
+    weight: f64,
     ambient_value: f64,
 ) -> Array2<f64> {
     assert_eq!(q.dim(), uv.dim());
@@ -97,10 +97,10 @@ pub fn advect(
         // Runge-Kutta(3)
         let x0 = vec2(i as f64, j as f64);
         let k1 = uv[[i, j]];
-        let k2 = interpolate_linear(uv, x0 - 0.5 * coeff * k1);
-        let k3 = interpolate_linear(uv, x0 - 0.75 * coeff * k2);
+        let k2 = interpolate_linear(uv, x0 - 0.5 * weight * k1);
+        let k3 = interpolate_linear(uv, x0 - 0.75 * weight * k2);
 
-        let v = x0 - 2.0 / 9.0 * coeff * k1 - 3.0 / 9.0 * coeff * k2 - 4.0 / 9.0 * coeff * k3;
+        let v = x0 - 2.0 / 9.0 * weight * k1 - 3.0 / 9.0 * weight * k2 - 4.0 / 9.0 * weight * k3;
 
         interpolate_bicubic(q, v, ambient_value)
     })
