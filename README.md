@@ -1,6 +1,6 @@
 # APD: Advect, Project, Diffuse
 
-APD is a sinmple fluid simulation library supports
+APD is a simple fluid simulation library supports
 
 - Advect
 - Project
