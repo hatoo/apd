@@ -1,5 +1,5 @@
 [package]
-name = "apd"
+name = "project"
 version = "0.1.0"
 edition = "2018"
 
@@ -8,14 +8,6 @@ edition = "2018"
 [dependencies]
 ndarray = "0.15.3"
 cgmath = "0.18.0"
-
-[dev-dependencies]
-approx = "0.5.0"
-
-[workspace]
-members = [
-	"examples/image-util",
-	"examples/advect",
-	"examples/project",
-	"examples/diffuse",
-]
+apd = { path = "../.." }
+image-util = { path = "../image-util" }
+noise = "0.7"

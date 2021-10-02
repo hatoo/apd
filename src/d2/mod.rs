@@ -238,7 +238,7 @@ impl MacGrid {
         self.v = advect(&self.v, &v_uv, weight, 0.0);
     }
 
-    pub fn project(&mut self, dt: f64, dx: f64, divergence: Array2<f64>) {
+    pub fn project(&mut self, dt: f64, dx: f64, divergence: &Array2<f64>) {
         let divergence = Array::from_shape_fn(self.dim(), |(i, j)| {
             -1.0 * (self.u[[i + 1, j]] - self.u[[i, j]] + self.v[[i, j + 1]] - self.v[[i, j]]) / dx
                 + divergence[[i, j]] / dx
