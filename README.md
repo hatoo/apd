@@ -13,7 +13,7 @@ cargo run --package advect --release
 
 ![advect](demos/advect.gif)
 
-## Project
+## Project (and self advect)
 
 ```
 cargo run --package project --release 
