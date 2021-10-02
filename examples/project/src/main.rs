@@ -1,12 +1,11 @@
-use apd::d2::{advect, MacGrid};
+use apd::d2::MacGrid;
+use image_util::save_uv;
 use ndarray::Array;
 use noise::{NoiseFn, Perlin};
 
 fn main() {
     const N: usize = 400;
     const N_FRAME: usize = 64;
-
-    let mut soot = Array::from_elem((N, N), 0.5);
 
     let perlin = Perlin::new();
     let freq = 4.0;
@@ -26,12 +25,11 @@ fn main() {
     let mut mac_grid = MacGrid::new(u, v);
 
     for f in 1..=N_FRAME {
-        image_util::save_monochrome("project", f, &soot).unwrap();
+        let uv = mac_grid.create_uv();
+        save_uv("project", f, &uv, 20, 40.0).unwrap();
 
         mac_grid.self_advect(dt / dx);
         mac_grid.project(dt, dx, &divergence);
-        let uv = mac_grid.create_uv();
-        soot = advect(&soot, &uv, dt / dx, 0.0);
 
         eprint!("\r {} / {}", f, N_FRAME);
     }
