@@ -7,7 +7,9 @@ mod linear;
 /// 2D MAC grid
 #[derive(Clone, Debug)]
 pub struct MacGrid {
+    /// Horizontal components
     u: Array2<f64>,
+    /// Vertical components
     v: Array2<f64>,
 }
 
@@ -84,7 +86,11 @@ fn interpolate_bicubic(q: &Array2<f64>, ij: Vector2<f64>, ambient_value: f64) ->
     q_m1 * t_m1 + q_0 * t_0 + q_p1 * t_p1 + q_p2 * t_p2
 }
 
-/// Advect `q` by `weight` * `uv` vectors.
+/// Advect `q` by `weight` * `uv` vector field.
+///
+/// `weight` is typicaly delta of time
+///
+/// `ambient_value` is used for a value out of grid.
 pub fn advect(
     q: &Array2<f64>,
     uv: &Array2<Vector2<f64>>,
@@ -106,7 +112,13 @@ pub fn advect(
     })
 }
 
-/// Diffuse `q` using Gaussian filter
+/// Diffuse `q` using Gaussian filter.
+///
+/// `dx` is typicaly the length of one grid size.
+///
+/// `sigma2` and `dx` are parameters for Gaussian filter.
+///
+/// `ambient_value` is used for a value out of grid.
 pub fn diffuse(q: &Array2<f64>, sigma2: f64, dx: f64, ambient_value: f64) -> Array2<f64> {
     let cut_off = 0.1 * sigma2.sqrt();
     let left = 1.0 / (2.0 * PI * sigma2).sqrt();
@@ -175,12 +187,12 @@ impl MacGrid {
         }
     }
 
-    /// return dimension
+    /// returns size of grid
     pub fn dim(&self) -> (usize, usize) {
         (self.v.dim().0, self.u.dim().1)
     }
 
-    /// Caluclate UV vector from the MacGrid
+    /// Caluclate UV vector from the MacGrid. O(NM) where N and M are width and height of the grid.
     pub fn create_uv(&self) -> Array2<Vector2<f64>> {
         Array::from_shape_fn(self.dim(), |(i, j)| {
             let u = 0.5 * (self.u[[i, j]] + self.u[[i + 1, j]]);
@@ -190,7 +202,9 @@ impl MacGrid {
         })
     }
 
-    /// Add Macgrid with the weight
+    /// Add MacGrid with the `weight`.
+    ///
+    /// `self` += `weight` * `other`
     pub fn add(&mut self, other: &Self, weight: f64) {
         assert_eq!(self.dim(), other.dim());
 
@@ -203,7 +217,9 @@ impl MacGrid {
         });
     }
 
-    /// Advect self
+    /// Advect self with `weight`
+    ///
+    /// `weight` is typicaly delta of time
     pub fn self_advect(&mut self, weight: f64) {
         let u_uv = Array::from_shape_fn(self.u.dim(), |(i, j)| {
             let u = self.u[[i, j]];
@@ -239,7 +255,13 @@ impl MacGrid {
         self.v = advect(&self.v, &v_uv, weight, 0.0);
     }
 
-    /// Project
+    /// Do project operation.
+    ///
+    /// `dt` is delta of time.
+    ///
+    /// `dx` is typicaly the length of one grid size.
+    ///
+    /// You can control divergence using `divergence`.
     pub fn project(&mut self, dt: f64, dx: f64, divergence: &Array2<f64>) {
         let divergence = Array::from_shape_fn(self.dim(), |(i, j)| {
             -1.0 * (self.u[[i + 1, j]] - self.u[[i, j]] + self.v[[i, j + 1]] - self.v[[i, j]]) / dx
@@ -277,28 +299,30 @@ impl MacGrid {
         }
     }
 
-    /// Diffuse
+    /// Diffuse self.
+    ///
+    /// See [diffuse](fn@diffuse)
     pub fn diffuse(&mut self, sigma2: f64, dx: f64) {
         self.u = diffuse(&self.u, sigma2, dx, 0.0);
         self.v = diffuse(&self.v, sigma2, dx, 0.0);
     }
 
-    /// returns immutable `u` component reference
+    /// returns the immutable reference of `u` component
     pub fn u(&self) -> &Array2<f64> {
         &self.u
     }
 
-    /// returns immutable `v` component reference
+    /// returns the immutable reference of `v` component
     pub fn v(&self) -> &Array2<f64> {
         &self.v
     }
 
-    /// returns mutable `u` component reference
+    /// returns the mutable reference of `u` component
     pub fn u_mut(&mut self) -> ArrayViewMut2<f64> {
         self.u.view_mut()
     }
 
-    /// returns mutable `v` component reference
+    /// returns the mutable reference of `v` component
     pub fn v_mut(&mut self) -> ArrayViewMut2<f64> {
         self.v.view_mut()
     }
