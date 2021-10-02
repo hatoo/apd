@@ -157,34 +157,37 @@ impl MacGrid {
     }
 
     pub fn project(&mut self, dt: f64, dx: f64, divergence: Array2<f64>) {
-        let div = Array::from_shape_fn(self.dim(), |(i, j)| {
+        let divergence = Array::from_shape_fn(self.dim(), |(i, j)| {
             -1.0 * (self.u[[i + 1, j]] - self.u[[i, j]] + self.v[[i, j + 1]] - self.v[[i, j]]) / dx
                 + divergence[[i, j]] / dx
         });
 
+        // TODO: Support variable density.
+        // Currently the density is restricted to constant since the linear system solver
+        // does not converge unless the matrix is symmetry.
         let density = Array::from_elem(self.dim(), 1.0);
-        let mut p = Array::zeros(div.dim());
+        let mut pressure = Array::zeros(divergence.dim());
 
         let scale = dt / (dx * dx);
 
         let diag = 4.0 * scale / &density;
         let others = -1.0 * scale / &density;
 
-        linear::lin_solve_pcg(&mut p, &div, &diag, &others);
+        linear::lin_solve_pcg(&mut pressure, &divergence, &diag, &others);
 
         let l = dt / dx;
 
         let (w, h) = self.dim();
         for i in 1..w {
             for j in 0..h {
-                self.u[[i, j]] -= l * (p[[i, j]] - p[[i - 1, j]])
+                self.u[[i, j]] -= l * (pressure[[i, j]] - pressure[[i - 1, j]])
                     / (0.5 * (density[[i - 1, j]] + density[[i, j]]));
             }
         }
 
         for i in 0..w {
             for j in 1..h {
-                self.v[[i, j]] -= l * (p[[i, j]] - p[[i, j - 1]])
+                self.v[[i, j]] -= l * (pressure[[i, j]] - pressure[[i, j - 1]])
                     / (0.5 * (density[[i, j - 1]] + density[[i, j]]));
             }
         }
