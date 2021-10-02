@@ -7,13 +7,7 @@ fn main() {
     const N: usize = 400;
     const N_FRAME: usize = 64;
 
-    let mut soot = Array::zeros((N, N));
-
-    for i in N / 2 - 100..=N / 2 + 100 {
-        for j in N / 2 - 100..=N / 2 + 100 {
-            soot[[i, j]] = 0.5;
-        }
-    }
+    let mut soot = Array::from_elem((N, N), 0.5);
 
     let perlin = Perlin::new();
     let freq = 4.0;
@@ -28,9 +22,9 @@ fn main() {
     let dx = 1.0 / N as f64;
 
     for f in 1..=N_FRAME {
-        image_util::save_monochrome("diffuse", f, &soot).unwrap();
+        image_util::save_monochrome("advect", f, &soot).unwrap();
 
-        soot = advect(&soot, &uv, dt / dx);
+        soot = advect(&soot, &uv, dt / dx, 0.0);
 
         eprint!("\r {} / {}", f, N_FRAME);
     }
