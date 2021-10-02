@@ -1,5 +1,5 @@
 [package]
-name = "apd"
+name = "diffuse"
 version = "0.1.0"
 edition = "2018"
 
@@ -7,13 +7,5 @@ edition = "2018"
 
 [dependencies]
 ndarray = "0.15.3"
-cgmath = "0.18.0"
-
-[dev-dependencies]
-approx = "0.5.0"
-
-[workspace]
-members = [
-	"examples/image-util",
-	"examples/diffuse",
-]
+apd = { path = "../.." }
+image-util = { path = "../image-util" }
