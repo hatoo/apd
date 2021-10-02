@@ -50,9 +50,12 @@ pub fn save_uv(
             let i = i * interval;
             let j = j * interval;
 
-            pb.move_to(i as f32, j as f32);
+            let x = i + interval / 2;
+            let y = j + interval / 2;
 
-            let to = vec2(i as f64, j as f64) + length * uv[[i, j]];
+            pb.move_to(x as f32, y as f32);
+
+            let to = vec2(x as f64, y as f64) + length * uv[[i, j]];
             pb.line_to(to.x as f32, to.y as f32);
         }
     }
