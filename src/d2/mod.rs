@@ -5,7 +5,7 @@ use std::f64::consts::PI;
 mod linear;
 
 /// 2D MAC grid
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MacGrid {
     u: Array2<f64>,
     v: Array2<f64>,
