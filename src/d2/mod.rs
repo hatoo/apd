@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
 use cgmath::{vec2, Vector2};
-use ndarray::{Array, Array2, Zip};
+use ndarray::{Array, Array2, ArrayViewMut2, Zip};
 
 mod linear;
 
@@ -263,6 +263,22 @@ impl MacGrid {
     pub fn diffuse(&mut self, sigma2: f64, dx: f64) {
         self.u = diffuse(&self.u, sigma2, dx, 0.0);
         self.v = diffuse(&self.v, sigma2, dx, 0.0);
+    }
+
+    pub fn u(&self) -> &Array2<f64> {
+        &self.u
+    }
+
+    pub fn v(&self) -> &Array2<f64> {
+        &self.v
+    }
+
+    pub fn u_mut(&mut self) -> ArrayViewMut2<f64> {
+        self.u.view_mut()
+    }
+
+    pub fn v_mut(&mut self) -> ArrayViewMut2<f64> {
+        self.v.view_mut()
     }
 }
 #[cfg(test)]
