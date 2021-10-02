@@ -28,7 +28,7 @@ fn interpolate_linear(q: &Array2<Vector2<f64>>, ij: Vector2<f64>) -> Vector2<f64
     let t1 = y.fract();
     let t0 = 1.0 - t1;
 
-    let get = |i, j| q.get([i, j]).copied().unwrap_or(vec2(0.0, 0.0));
+    let get = |i, j| q.get([i, j]).copied().unwrap_or_else(|| vec2(0.0, 0.0));
 
     (get(i0, j0) * t0 + get(i0, j1) * t1) * s0 + (get(i1, j0) * t0 + get(i1, j1) * t1) * s1
 }
