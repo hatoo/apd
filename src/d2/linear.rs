@@ -116,6 +116,7 @@ fn dot_product(a: &Array2<f64>, b: &Array2<f64>) -> f64 {
         .sum::<f64>()
 }
 
+/// Modified Incomplete Cholesky Conjugate Gradient, Level Zero
 #[allow(clippy::many_single_char_names)]
 pub fn lin_solve_pcg(
     p: &mut Array2<f64>,
