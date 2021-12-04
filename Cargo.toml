@@ -1,6 +1,6 @@
 [package]
 name = "apd"
-version = "0.0.0"
+version = "0.0.1"
 authors = ["hatoo <hato2000@gmail.com>"]
 edition = "2018"
 description = "APD is a simple fluid simulation library supports Advect, Project and Diffuse operations."
