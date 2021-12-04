@@ -7,7 +7,7 @@ edition = "2018"
 
 [dependencies]
 ndarray = "0.15.3"
-image = "0.23"
+image = "0.23.14"
 tiny-skia = "0.6.1"
 cgmath = "0.18.0"
 anyhow = "1.0"
